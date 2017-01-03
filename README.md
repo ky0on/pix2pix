@@ -1,4 +1,3 @@
-
 # pix2pix
 [[Project]](https://phillipi.github.io/pix2pix/)   [[Arxiv]](https://arxiv.org/pdf/1611.07004v1.pdf)
 
@@ -11,6 +10,11 @@ Image-to-Image Translation Using Conditional Adversarial Networks
  In arxiv, 2016.
 
 On some tasks, decent results can be obtained fairly quickly and on small datasets. For example, to learn to generate facades (example shown above), we trained on just 400 images for about 2 hours (on a single Pascal Titan X GPU). However, for harder problems it may be important to train on far larger datasets, and for many hours or even days.
+
+## Usage (kyon)
+- `python my_train_eval.py -t ../../dataset/row/20_500/train.csv -e ../../dataset/row/20_500/eval.csv --dst datasets/row --epoch 500`
+    - results will be saved in `results/row/500_net_G_val/images/output/`
+    - models will be saved in `checkpoints/row/`
 
 ## Setup
 
