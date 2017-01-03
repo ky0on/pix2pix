@@ -191,6 +191,7 @@ function util.load(filename, opt)
     require 'cunn'
   end
   
+  print('loading', filename)
   local net = torch.load(filename)
 
   if opt.gpu > 0 then
