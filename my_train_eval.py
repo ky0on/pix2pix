@@ -45,11 +45,11 @@ if __name__ == '__main__':
 
     #argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train', '-t', default='../../dataset/debug/train.csv', help='path to list of training images')
-    parser.add_argument('--eval', '-e', default='../../dataset/debug/eval.csv', help='path to list of evaluation images')
+    parser.add_argument('--train', '-t', default='../../dataset/row/20_500/train.csv', help='path to list of training images')
+    parser.add_argument('--eval', '-e', default='../../dataset/row/20_500/eval.csv', help='path to list of evaluation images')
     parser.add_argument('--base', default='../../', help='path to image dir')
-    parser.add_argument('--dst', default='datasets/debug')
-    parser.add_argument('--epoch', type=int, default=200)
+    parser.add_argument('--dst', default='datasets/row')
+    parser.add_argument('--epoch', type=int, default=500)
     args = parser.parse_args()
 
     #init
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     #copy train images
     set_images(train_images, 'train')
-    set_images(val_images, 'val')
+    set_images(train_images + val_images, 'val')
 
     #combine
     cmd = 'python scripts/combine_A_and_B.py \
