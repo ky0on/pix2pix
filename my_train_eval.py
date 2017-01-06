@@ -10,7 +10,7 @@ import cv2
 import shutil
 import argparse
 import subprocess
-from os.path import basename, join
+from os.path import basename, join, splitext
 from common import make_noisy
 
 __autor__ = 'Kyosuke Yamamoto (kyon)'
@@ -27,30 +27,48 @@ def set_images(images, dtype):
     #copy images
     for src in images:
         src = join(args.base, src)
+        fn, ext = splitext(basename(src))
+        im = cv2.imread(src, 3)
 
         #noisy image
-        im = cv2.imread(src)
         noisy = make_noisy(im)
-        dst = join(args.dst, 'A', dtype, basename(src))
-        cv2.imwrite(dst, noisy)
-        print(src, '->', dst)
+        blocks = blockshaped(noisy, size, size)
+        for i, block in enumerate(blocks):
+            dst = join(args.dst, 'A', dtype, '{}_{}{}'.format(fn, i, ext))
+            cv2.imwrite(dst, block)
+            print(src, '->', dst)
 
         #original image
-        dst = join(args.dst, 'B', dtype, basename(src))
-        shutil.copyfile(src, dst)
-        print(src, '->', dst)
+        blocks = blockshaped(im, size, size)
+        for i, block in enumerate(blocks):
+            dst = join(args.dst, 'B', dtype, '{}_{}{}'.format(fn, i, ext))
+            cv2.imwrite(dst, block)
+            print(src, '->', dst)
+
+
+def blockshaped(arr, nrows, ncols):
+    ''' Split arr into blocks with same shapes
+    http://stackoverflow.com/questions/16856788/slice-2d-array-into-smaller-2d-arrays '''
+
+    h, w, d = arr.shape
+    return (arr.reshape(h//nrows, nrows, -1, ncols, 3)
+            .swapaxes(1, 2)
+            .reshape(-1, nrows, ncols, 3))
 
 
 if __name__ == '__main__':
 
     #argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train', '-t', default='../../dataset/row/20_500/train.csv', help='path to list of training images')
-    parser.add_argument('--eval', '-e', default='../../dataset/row/20_500/eval.csv', help='path to list of evaluation images')
+    parser.add_argument('--train', '-t', default='../../dataset/row/20_512/train.csv', help='path to list of training images')
+    parser.add_argument('--eval', '-e', default='../../dataset/row/20_512/eval.csv', help='path to list of evaluation images')
     parser.add_argument('--base', default='../../', help='path to image dir')
     parser.add_argument('--dst', default='datasets/row')
     parser.add_argument('--epoch', type=int, default=500)
     args = parser.parse_args()
+
+    #param
+    size = 256    # input size to pix2pix
 
     #init
     for t1 in ('A', 'B'):
@@ -73,11 +91,11 @@ if __name__ == '__main__':
     subprocess.check_call(cmd, shell=True)
 
     #train
-    cmd = 'DATA_ROOT={} name=row which_direction=AtoB niter={} th train.lua'.format(args.dst, args.epoch)
-    print('running', cmd)
-    subprocess.check_call(cmd, shell=True)
+    # cmd = 'DATA_ROOT={} name=row which_direction=AtoB niter={} th train.lua'.format(args.dst, args.epoch)
+    # print('running', cmd)
+    # subprocess.check_call(cmd, shell=True)
 
     #eval
-    cmd = 'DATA_ROOT={} name=row which_direction=AtoB which_epoch={} th test.lua'.format(args.dst, args.epoch)
-    print('running', cmd)
-    subprocess.check_call(cmd, shell=True)
+    # cmd = 'DATA_ROOT={} name=row which_direction=AtoB which_epoch={} th test.lua'.format(args.dst, args.epoch)
+    # print('running', cmd)
+    # subprocess.check_call(cmd, shell=True)
