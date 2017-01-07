@@ -7,7 +7,6 @@ from __future__ import print_function
 import sys
 sys.path.append('../..')
 import cv2
-import shutil
 import argparse
 import subprocess
 from os.path import basename, join, splitext
@@ -65,37 +64,45 @@ if __name__ == '__main__':
     parser.add_argument('--base', default='../../', help='path to image dir')
     parser.add_argument('--dst', default='datasets/row')
     parser.add_argument('--epoch', type=int, default=500)
+    parser.add_argument('--no_setimg', action='store_true')
+    parser.add_argument('--no_train', action='store_true')
+    parser.add_argument('--no_eval', action='store_true')
     args = parser.parse_args()
 
     #param
     size = 256    # input size to pix2pix
 
-    #init
-    for t1 in ('A', 'B'):
-        for t2 in ('train', 'val'):
-            subprocess.check_call('mkdir -p {}/{}/{}'.format(args.dst, t1, t2), shell=True)
+    #set images
+    if not args.no_setimg:
 
-    #images for training/validation
-    with open(args.train) as f:
-        train_images = f.read().splitlines()
-    with open(args.eval) as f:
-        val_images = f.read().splitlines()
+        #init
+        for t1 in ('A', 'B'):
+            for t2 in ('train', 'val'):
+                subprocess.check_call('mkdir -p {}/{}/{}'.format(args.dst, t1, t2), shell=True)
 
-    #copy train images
-    set_images(train_images, 'train')
-    set_images(train_images + val_images, 'val')
+        #images for training/validation
+        with open(args.train) as f:
+            train_images = f.read().splitlines()
+        with open(args.eval) as f:
+            val_images = f.read().splitlines()
 
-    #combine
-    cmd = 'python scripts/combine_A_and_B.py \
-        --fold_A {} --fold_B {} --fold_AB {}'.format(join(args.dst, 'A'), join(args.dst, 'B'), args.dst)
-    subprocess.check_call(cmd, shell=True)
+        #copy train images
+        set_images(train_images, 'train')
+        set_images(train_images + val_images, 'val')
+
+        #combine
+        cmd = 'python scripts/combine_A_and_B.py \
+            --fold_A {} --fold_B {} --fold_AB {}'.format(join(args.dst, 'A'), join(args.dst, 'B'), args.dst)
+        subprocess.check_call(cmd, shell=True)
 
     #train
-    # cmd = 'DATA_ROOT={} name=row which_direction=AtoB niter={} th train.lua'.format(args.dst, args.epoch)
-    # print('running', cmd)
-    # subprocess.check_call(cmd, shell=True)
+    if not args.no_train:
+        cmd = 'DATA_ROOT={} name=row which_direction=AtoB niter={} th train.lua'.format(args.dst, args.epoch)
+        print('running', cmd)
+        subprocess.check_call(cmd, shell=True)
 
     #eval
-    # cmd = 'DATA_ROOT={} name=row which_direction=AtoB which_epoch={} th test.lua'.format(args.dst, args.epoch)
-    # print('running', cmd)
-    # subprocess.check_call(cmd, shell=True)
+    if not args.no_eval:
+        cmd = 'DATA_ROOT={} name=row which_direction=AtoB which_epoch={} th test.lua'.format(args.dst, args.epoch)
+        print('running', cmd)
+        subprocess.check_call(cmd, shell=True)
