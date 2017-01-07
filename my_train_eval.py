@@ -9,6 +9,7 @@ sys.path.append('../..')
 import cv2
 import argparse
 import subprocess
+import numpy as np
 from os.path import basename, join, splitext
 from common import make_noisy
 
@@ -72,6 +73,12 @@ if __name__ == '__main__':
     #param
     size = 256    # input size to pix2pix
 
+    #images for training/validation
+    with open(args.train) as f:
+        train_images = f.read().splitlines()
+    with open(args.eval) as f:
+        val_images = f.read().splitlines()
+
     #set images
     if not args.no_setimg:
 
@@ -79,12 +86,6 @@ if __name__ == '__main__':
         for t1 in ('A', 'B'):
             for t2 in ('train', 'val'):
                 subprocess.check_call('mkdir -p {}/{}/{}'.format(args.dst, t1, t2), shell=True)
-
-        #images for training/validation
-        with open(args.train) as f:
-            train_images = f.read().splitlines()
-        with open(args.eval) as f:
-            val_images = f.read().splitlines()
 
         #copy train images
         set_images(train_images, 'train')
@@ -106,3 +107,17 @@ if __name__ == '__main__':
         cmd = 'DATA_ROOT={} name=row which_direction=AtoB which_epoch={} th test.lua'.format(args.dst, args.epoch)
         print('running', cmd)
         subprocess.check_call(cmd, shell=True)
+
+        #combine blocks (todo: totally fixed)
+        for fp in train_images + val_images:
+            resdir = 'results/row/{}_net_G_val/images/output'.format(args.epoch)
+            fp = join(resdir, basename(fp))
+            im0 = cv2.imread(fp.replace('.png', '_0.png'))
+            im1 = cv2.imread(fp.replace('.png', '_1.png'))
+            im2 = cv2.imread(fp.replace('.png', '_2.png'))
+            im3 = cv2.imread(fp.replace('.png', '_3.png'))
+            im = np.vstack((np.hstack((im0, im1)),
+                            np.hstack((im2, im3))))
+            out = join(resdir, basename(fp))
+            cv2.imwrite(out, im)
+            print('saved as', out)
